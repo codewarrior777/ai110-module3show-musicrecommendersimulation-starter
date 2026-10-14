@@ -5,13 +5,14 @@
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#5-testing)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](#6-how-to-run)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi)](src/api.py)
+[![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit)](app.py)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A command-line music recommender that scores and ranks a 20-song catalog
 against user taste profiles. Built as Project 3 for **AI 110 — Foundations
 of AI Engineering**.
 
-**Deliverables:** CLI + tests (100% coverage) + FastAPI REST API + Model Card + ARCHITECTURE (6 ADRs).
+**Deliverables:** CLI + tests (100% coverage) + FastAPI REST API + Streamlit UI + Model Card + ARCHITECTURE (6 ADRs).
 
 ---
 
@@ -285,7 +286,35 @@ curl http://127.0.0.1:8000/recommend/synthwave_late?k=3&mode=genre-first
 
 ---
 
-## 5. Testing
+## 5. Streamlit UI
+
+For an interactive front-end, the project ships a **Streamlit app** that
+wraps the same functional API used by the CLI and REST service.
+
+```bash
+streamlit run app.py
+# Opens at http://localhost:8501
+```
+
+### Features
+
+- **Profile selector** — the 3 built-in profiles plus a fully custom one
+  (genre, mood, target energy, acoustic preference).
+- **Ranking mode toggle** — switch between `genre-first`, `mood-first`,
+  and `energy-similarity` in real time.
+- **Diversity slider** — tune `diversity_weight` from `0.0` (disabled) to
+  `3.0` and see the ranking reshuffle live.
+- **Top-K selector** — choose between 1 and 10 recommendations.
+- **Explainability panel** — each result expands into a card showing
+  genre, mood, energy, tempo, acousticness, popularity, and the exact
+  scoring reasons that produced the score.
+
+The UI is a **thin layer** over `recommend_songs` — no scoring logic is
+duplicated (see ADR-006 in `ARCHITECTURE.md`).
+
+---
+
+## 6. Testing
 
 **28 tests, 100% coverage on `src/recommender.py`.**
 
@@ -338,12 +367,12 @@ TOTAL                       93      0   100%
 ```
 
 **Coverage is 100% on the core domain module.** Wrapper files
-(`api.py`, `main.py`) are excluded via `.coveragerc` — they have no logic
-that isn't already tested through the domain layer.
+(`api.py`, `main.py`, `app.py`) are excluded via `.coveragerc` — they
+have no logic that isn't already tested through the domain layer.
 
 ---
 
-## 6. How to Run
+## 7. How to Run
 
 ```bash
 # Clone
@@ -356,9 +385,10 @@ python -m venv .venv
 # source .venv/bin/activate     # macOS / Linux
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -e ".[dev]"
+# or: pip install -r requirements.txt
 
-# Run the recommender
+# Run the CLI (3 profiles × 3 modes)
 python src/main.py
 
 # Run the tests
@@ -366,11 +396,19 @@ python -m pytest tests/ -v
 
 # Run the API
 cd src && uvicorn api:app --reload
+# Swagger UI at http://127.0.0.1:8000/docs
+
+# Run the Streamlit UI
+streamlit run app.py
+# Opens at http://localhost:8501
+
+# Run the benchmark
+python benchmark.py
 ```
 
 ---
 
-## 7. Project Structure
+## 8. Project Structure
 
 ```
 ai110-module3show-musicrecommendersimulation-starter/
@@ -386,6 +424,7 @@ ai110-module3show-musicrecommendersimulation-starter/
 │   └── api.py                 # FastAPI REST API with Swagger docs
 ├── tests/
 │   └── test_recommender.py    # 28 tests, 100% coverage
+├── app.py                     # Streamlit UI (interactive recommender)
 ├── .coveragerc                # Coverage config (excludes wrappers)
 ├── .pre-commit-config.yaml    # Pre-commit hooks (ruff, trailing-whitespace, …)
 ├── conftest.py                # Pytest config: src/ on sys.path
@@ -403,7 +442,7 @@ ai110-module3show-musicrecommendersimulation-starter/
 
 ---
 
-## 8. Benchmark
+## 9. Benchmark
 
 `benchmark.py` measures how `score_song` and `recommend_songs` scale as
 the catalog grows. The 20-song base catalog is duplicated to reach larger
@@ -446,9 +485,9 @@ Built by **Gustavo Ramos** for *AI 110 — Foundations of AI Engineering*.
 | | |
 |---|---|
 | **Role** | Lead architect · Solo developer · Own QA |
-| **Architecture** | 4 modules · 6 ADRs · 1 flow diagram |
+| **Architecture** | 5 modules · 6 ADRs · 1 flow diagram |
 | **Quality** | 28 tests · 100% coverage · 0 lint warnings |
-| **Interfaces** | 1 CLI · 1 REST API · 3 ranking modes |
+| **Interfaces** | 1 CLI · 1 REST API · 1 Streamlit UI · 3 ranking modes |
 | **Standards** | PEP 8 · PEP 257 · Conventional Commits |
 
 Every line reviewed. Every tradeoff documented. Every edge case tested.
