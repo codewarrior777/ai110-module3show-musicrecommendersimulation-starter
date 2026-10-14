@@ -17,7 +17,7 @@ Stretch features:
 
 import csv
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 
 # ---------------------------------------------------------------------
@@ -113,15 +113,6 @@ def score_song(
     Score a single song against user preferences.
 
     Returns (score, reasons).
-
-    user_prefs keys:
-      - favorite_genre: str
-      - favorite_mood: str
-      - target_energy: float (0-1)
-      - likes_acoustic: bool
-      - max_tempo: float (optional)
-
-    mode: one of RANKING_MODES keys, or "genre-first" by default.
     """
     weights = RANKING_MODES.get(mode, RANKING_MODES[DEFAULT_MODE])
     score = 0.0
@@ -164,7 +155,7 @@ def score_song(
     else:
         reasons.append("acoustic preference mismatch")
 
-    # --- 5. Popularity micro-bonus (stretch attribute) ---
+    # --- 5. Popularity micro-bonus ---
     pop = song.get("popularity", 0)
     popularity_bonus = round(pop / 100 * 0.5, 3)
     score += popularity_bonus
@@ -192,11 +183,14 @@ def recommend_songs(
 ) -> List[Tuple[Dict, float, str]]:
     """
     Return the top-k songs as (song_dict, score, explanation) tuples,
-    sorted by score descending.
+    sorted by ADJUSTED score descending.
 
     Diversity bonus: while selecting the top-k, penalize songs whose
     artist or genre already appeared in the picked set. This prevents
     the "same artist x5" filter bubble.
+
+    The final list is re-sorted by the adjusted score so the returned
+    list is always monotonically descending.
     """
     # Score every song first
     scored: List[Tuple[Dict, float, List[str]]] = []
@@ -224,12 +218,17 @@ def recommend_songs(
         # Build a short explanation from the top reasons
         explanation = "; ".join(reasons[:3])
 
-        if artist_repeat > 0 or genre_repeat > 0:
+        # Only mention the diversity penalty if it actually applied
+        if penalty > 0:
             explanation += f" [diversity penalty: -{penalty:.2f}]"
 
         picked.append((song, adjusted_score, explanation))
         seen_artists[song["artist"]] = artist_repeat + 1
         seen_genres[song["genre"]] = genre_repeat + 1
+
+    # Re-sort by adjusted score so the returned list is always
+    # monotonically descending.
+    picked.sort(key=lambda x: x[1], reverse=True)
 
     return picked
 
@@ -252,7 +251,7 @@ class Recommender:
             "tempo_bpm": song.tempo_bpm, "valence": song.valence,
             "danceability": song.danceability,
             "acousticness": song.acousticness,
-            "popularity": 50,           # default when loaded as dataclass
+            "popularity": 50,
             "release_year": 2023,
             "detailed_mood_tags": "",
             "instrumentalness": 0.0,
@@ -270,7 +269,6 @@ class Recommender:
         song_dicts = [self._to_dict(s) for s in self.songs]
         ranked = recommend_songs(prefs, song_dicts, k=k)
 
-        # Map ranked dicts back to Song objects
         by_id = {s.id: s for s in self.songs}
         return [by_id[item[0]["id"]] for item in ranked]
 
@@ -284,4 +282,4 @@ class Recommender:
         }
         _, reasons = score_song(prefs, self._to_dict(song))
         return "; ".join(reasons)
-
+    
