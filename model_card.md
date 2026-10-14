@@ -4,7 +4,7 @@
 **Author:** Gustavo Ramos
 **Course:** AI 110 — Foundations of AI Engineering
 **Project:** Project 3 (Music Recommender Simulation)
-**Date:** October 2026
+**Date:** October 2025
 
 ---
 
@@ -47,9 +47,15 @@ several signals:
 2. **+2.0** if the song's mood matches the user's favorite mood.
 3. **+ up to 2.0** for how close the song's energy is to the user's target
    energy. A perfect match gets 2.0; a maximum mismatch gets 0.0.
-4. **+1.0** if the acoustic preference matches (acoustic for
-   `likes_acoustic=True`, non-acoustic otherwise).
+4. **+1.0** if the acoustic preference *fits* the song, where fit is defined
+   as `likes_acoustic == (song.acousticness > 0.6)`. This is a **binary
+   fit**, not a continuous similarity: a user who dislikes acoustic music
+   receives the bonus for non-acoustic songs.
 5. **+ up to 0.5** as a popularity micro-bonus (popularity / 100 × 0.5).
+6. **− linear tempo penalty** `(tempo_bpm − max_tempo) / 100`, applied
+   **only when** the user sets `max_tempo` and the song exceeds it. The
+   three built-in profiles do not set `max_tempo`, so this term is 0.0 by
+   default.
 
 The **weights change by mode**:
 
@@ -58,8 +64,10 @@ The **weights change by mode**:
 - `energy-similarity` → energy counts the most (up to 4.0).
 
 After scoring, the top-K songs are picked. **A diversity penalty of 0.8
-per repeated artist or genre** is applied at picking time to prevent the
-list from collapsing into "five songs by the same artist".
+per repeated artist or genre** is applied during a **greedy top-K
+selection** (candidates are pre-sorted by raw score; the final list is
+re-sorted by adjusted score). This prevents the list from collapsing into
+"five songs by the same artist".
 
 ---
 
@@ -82,17 +90,23 @@ ranking**, not predictive accuracy.
 - ✅ Diversity penalty visibly kicks in when the same artist repeats
 - ✅ All 3 modes produce different orderings on the same profile
 
+**Automated verification:** 28 unit tests in `tests/test_recommender.py`
+pass with **100% coverage** on `src/recommender.py` (verified via
+`pytest --cov`). These tests do not measure ranking quality — they
+measure that the scoring and selection logic behaves as specified.
+
 ---
 
 ## 5. Limitations and Biases
 
 ### 5a. Genre imbalance
 
-The dataset has **2 pop songs, 3 lofi songs, 2 synthwave songs, 1 rock,
-2 ambient, 2 jazz, 3 indie pop, 1 folk**. A user whose favorite genre is
-`folk` (only 1 song) will get essentially that one song plus four
-"genre miss" fillers. **Users of under-represented genres are
-systematically under-served.**
+The dataset is distributed as **4 pop, 4 lofi, 3 synthwave, 2 rock,
+2 ambient, 2 jazz, 2 indie pop, and 1 folk** (20 songs total). A user
+whose favorite genre is `folk` (only 1 song) will get essentially that
+one song plus four "genre miss" fillers. **Users of under-represented
+genres are systematically under-served.** Even the best-represented
+genres (`pop` and `lofi`, 4 each) cover only 20% of the catalog.
 
 ### 5b. Small catalog
 
@@ -119,14 +133,43 @@ There is no recency signal beyond a raw `release_year` column that the
 scoring function doesn't use. A 2019 song and a 2024 song with the same
 features score identically.
 
+### 5f. OOP wrapper discards stretch attributes
+
+The `Recommender` class (the OOP API used by `tests/test_recommender.py`)
+converts each `Song` dataclass into a dict via `_to_dict()` and
+**hardcodes** `popularity=50`, `release_year=2023`, `instrumentalness=0.0`,
+and `liveness=0.0`. As a result:
+
+- The popularity micro-bonus is **always exactly 0.25** in the OOP path.
+- The 5 stretch attributes from the CSV are **ignored** by the OOP API.
+
+The functional API (`score_song` / `recommend_songs`) does use the real
+CSV values. This is a deliberate simplification to keep the dataclass
+small, but it means the two APIs are **not score-equivalent**.
+
+### 5g. Acoustic threshold is arbitrary
+
+The binary fit uses `acousticness > 0.6` as the cutoff. This value is
+hand-picked and not validated against user data. A song with
+`acousticness = 0.59` is treated as "not acoustic" for a user who likes
+acoustic music, despite being nearly identical to a song at `0.61`.
+
+### 5h. No diversity penalty in the OOP path
+
+The `Recommender.recommend()` method calls `recommend_songs()` with
+default arguments, so the diversity penalty **is** applied. However, the
+`Recommender` class does not expose a way to tune `diversity_weight` or
+`mode` per call, unlike the functional API. Users of the OOP path are
+locked into `genre-first` + `diversity_weight=0.8`.
+
 ---
 
 ## 6. Bias I Chose to Address (and Why)
 
-**Filter bubble via repeated artists / genres.** The dataset has 2 artists
-with multiple songs (Neon Echo ×3, LoRoom ×3, Slow Stereo ×3, Indigo
-Parade ×3). Without intervention, a synthwave fan would see
-`Night Drive Loop` at #1 and `Sunrise City` at #2 — both by Neon Echo.
+**Filter bubble via repeated artists / genres.** The dataset has **4
+artists** with multiple songs (Neon Echo ×3, LoRoom ×3, Slow Stereo ×3,
+Indigo Parade ×3). Without intervention, a synthwave fan could see
+multiple consecutive tracks by the same artist.
 
 **Fix:** a `diversity_weight=0.8` penalty is subtracted at picking time
 for each previously seen artist and genre. Visible in `output.txt` as
@@ -149,7 +192,11 @@ artist will be over-penalized. A per-user tunable would be the next step.
    likely to *not* have heard yet.
 5. **Make the diversity weight tunable** at the profile level, not global.
 6. **Add release_year decay** so recent music gets a small bonus.
-7. **Add automated tests** — the `tests/` directory is currently a stub.
+7. **Expand the OOP `Recommender` API** to carry all 15 CSV attributes
+   (and accept `mode` / `diversity_weight`), so the two APIs are
+   score-equivalent.
+8. **Add a per-profile `max_tempo` test case** to exercise the tempo
+   penalty in the CLI output (currently only covered by unit tests).
 
 ---
 
@@ -161,6 +208,8 @@ model proactively flagged:**
 - The genre imbalance in the dataset
 - That `popularity` might favor mainstream bias
 - That the diversity penalty has no per-user tunable
+- That the OOP wrapper discards the stretch attributes it advertises
+- That the `acousticness > 0.6` threshold is arbitrary and unvalidated
 
 Both models implemented the code mechanics I asked for and stopped there.
 **This is the same "silent coverage gap" pattern I documented in Module 2**
