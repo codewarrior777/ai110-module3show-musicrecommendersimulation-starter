@@ -1,8 +1,17 @@
 # 🎵 Music Recommender Simulation
 
+[![Tests](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/tests.yml)
+[![Lint](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/lint.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#-testing)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](#-how-to-run)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi)](src/api.py)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 A command-line music recommender that scores and ranks a 20-song catalog
 against user taste profiles. Built as Project 3 for **AI 110 — Foundations
 of AI Engineering**.
+
+**Deliverables:** CLI + tests (100% coverage) + FastAPI REST API + Model Card + ARCHITECTURE (6 ADRs).
 
 ---
 
@@ -52,7 +61,7 @@ recommended, which is impossible inside a black-box neural recommender.
 
 ---
 
-## 2. The Algorithm Recipe (Phase 2)
+## 2. The Algorithm Recipe
 
 ### 2a. Feature schema
 
@@ -97,7 +106,7 @@ score =  (weights["genre"]    if genre == user.favorite_genre   else 0)
 | `mood-first` | 2.0 | **3.0** | 2.0 | 1.0 |
 | `energy-similarity` | 1.0 | 1.0 | **4.0** | 1.0 |
 
-### 2c. Diversity bonus (stretch feature)
+### 2c. Diversity bonus
 
 The recommendation function re-ranks candidates with a diversity penalty:
 
@@ -167,7 +176,97 @@ ranking modes. Full output is in `output.txt`.
 
 ---
 
-## 4. How to Run
+## 4. REST API (FastAPI)
+
+The recommender is also exposed as a **REST API** with auto-generated
+Swagger documentation.
+
+```bash
+cd src
+uvicorn api:app --reload
+# Swagger UI at http://127.0.0.1:8000/docs
+```
+
+### Available Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Health check + song count |
+| GET | `/songs` | List all 20 songs in the catalog |
+| GET | `/songs/{song_id}` | Get one song by ID |
+| GET | `/modes` | List ranking modes with weights |
+| GET | `/profiles` | List the 3 built-in profiles |
+| POST | `/recommend` | Recommend for a **custom** user profile |
+| GET | `/recommend/{profile_key}` | Recommend for a **built-in** profile |
+| POST | `/score/{song_id}` | Score one song against a profile |
+
+**Example:**
+
+```bash
+curl http://127.0.0.1:8000/recommend/synthwave_late?k=3&mode=genre-first
+```
+
+---
+
+## 5. Testing
+
+**28 tests, 100% coverage on `src/recommender.py`.**
+
+```bash
+python -m pytest tests/ -v
+```
+
+Sample output:
+
+```
+============================= test session starts =============================
+collected 28 items
+
+tests/test_recommender.py::TestDataclasses::test_song_creation PASSED           [  3%]
+tests/test_recommender.py::TestDataclasses::test_user_profile_creation PASSED   [  7%]
+tests/test_recommender.py::TestLoadSongs::test_loads_real_csv PASSED            [ 10%]
+tests/test_recommender.py::TestLoadSongs::test_loads_all_15_attributes PASSED   [ 14%]
+tests/test_recommender.py::TestLoadSongs::test_missing_file_raises PASSED       [ 17%]
+tests/test_recommender.py::TestScoreSong::test_all_signals_match PASSED         [ 21%]
+tests/test_recommender.py::TestScoreSong::test_all_signals_miss PASSED          [ 25%]
+tests/test_recommender.py::TestScoreSong::test_ok_energy_fit_branch PASSED      [ 28%]
+tests/test_recommender.py::TestScoreSong::test_acoustic_preference_match PASSED [ 32%]
+tests/test_recommender.py::TestScoreSong::test_popularity_bonus_is_applied PASSED [ 35%]
+tests/test_recommender.py::TestScoreSong::test_tempo_cap_penalty PASSED         [ 39%]
+tests/test_recommender.py::TestScoreSong::test_tempo_under_cap_no_penalty PASSED [ 42%]
+tests/test_recommender.py::TestScoreSong::test_each_mode_returns_different_score PASSED [ 46%]
+tests/test_recommender.py::TestScoreSong::test_unknown_mode_falls_back_to_default PASSED [ 50%]
+tests/test_recommender.py::TestRecommendSongs::test_returns_top_k PASSED        [ 53%]
+tests/test_recommender.py::TestRecommendSongs::test_sorted_descending_by_score PASSED [ 57%]
+tests/test_recommender.py::TestRecommendSongs::test_each_result_is_triple PASSED [ 60%]
+tests/test_recommender.py::TestRecommendSongs::test_diversity_penalty_visible PASSED [ 64%]
+tests/test_recommender.py::TestRecommendSongs::test_diversity_weight_zero_disables_penalty PASSED [ 67%]
+tests/test_recommender.py::TestRecommendSongs::test_different_modes_produce_different_orderings PASSED [ 71%]
+tests/test_recommender.py::TestRankingModes::test_all_modes_defined PASSED      [ 75%]
+tests/test_recommender.py::TestRankingModes::test_energy_similarity_prioritizes_energy PASSED [ 78%]
+tests/test_recommender.py::TestRankingModes::test_genre_first_prioritizes_genre PASSED [ 82%]
+tests/test_recommender.py::TestRecommenderOOP::test_recommend_returns_top_k PASSED [ 85%]
+tests/test_recommender.py::TestRecommenderOOP::test_recommend_prefers_matching_genre PASSED [ 89%]
+tests/test_recommender.py::TestRecommenderOOP::test_explain_recommendation_returns_string PASSED [ 92%]
+tests/test_recommender.py::TestRecommenderOOP::test_explain_recommendation_mentions_genre PASSED [ 96%]
+tests/test_recommender.py::TestRecommenderOOP::test_recommend_returns_objects_with_all_fields PASSED [100%]
+
+---------- coverage: platform win32, python 3.14.0-final-0 -----------
+Name                     Stmts   Miss  Cover   Missing
+------------------------------------------------------
+src/recommender.py          93      0   100%
+------------------------------------------------------
+TOTAL                       93      0   100%
+============================== 28 passed in 0.29s ==============================
+```
+
+**Coverage is 100% on the core domain module.** Wrapper files
+(`api.py`, `main.py`) are excluded via `.coveragerc` — they have no logic
+that isn't already tested through the domain layer.
+
+---
+
+## 6. How to Run
 
 ```bash
 # Clone
@@ -184,23 +283,40 @@ pip install -r requirements.txt
 
 # Run the recommender
 python src/main.py
+
+# Run the tests
+python -m pytest tests/ -v
+
+# Run the API
+cd src && uvicorn api:app --reload
 ```
 
 ---
 
-## 5. Project Structure
+## 7. Project Structure
 
 ```
 ai110-module3show-musicrecommendersimulation-starter/
+├── .github/
+│   └── workflows/
+│       ├── tests.yml          # CI: pytest on Python 3.12 + 3.13
+│       └── lint.yml           # CI: ruff check + format
 ├── data/
-│   └── songs.csv          # 20 songs, 15 attributes each
+│   └── songs.csv              # 20 songs, 15 attributes each
 ├── src/
-│   ├── recommender.py     # Core logic: load, score, rank
-│   └── main.py            # CLI runner (3 profiles × 3 modes)
-├── tests/                 # Placeholder for future tests
-├── output.txt             # Saved CLI output for all combinations
-├── model_card.md          # Model Card (bias, limits, improvement)
-├── ai_interactions.md     # AI agent workflow log
+│   ├── recommender.py         # Core logic: load, score, rank
+│   ├── main.py                # CLI runner (3 profiles × 3 modes)
+│   └── api.py                 # FastAPI REST API with Swagger docs
+├── tests/
+│   └── test_recommender.py    # 28 tests, 100% coverage
+├── .coveragerc                # Coverage config (excludes wrappers)
+├── .pre-commit-config.yaml    # Pre-commit hooks (ruff, trailing-whitespace, …)
+├── conftest.py                # Pytest config: src/ on sys.path
+├── output.txt                 # Saved CLI output for all combinations
+├── model_card.md              # Model Card (bias, limits, improvement)
+├── ARCHITECTURE.md            # 6 Architecture Decision Records
+├── ai_interactions.md         # AI agent workflow log
+├── pyproject.toml             # Package metadata + dev deps
 ├── requirements.txt
 └── README.md
 ```
@@ -211,4 +327,16 @@ ai110-module3show-musicrecommendersimulation-starter/
 
 Built by **Gustavo Ramos** for *AI 110 — Foundations of AI Engineering*.
 
-*"The bugs were the curriculum."*
+> *"Ship code you'd be proud to maintain."*
+
+| | |
+|---|---|
+| **Role** | Lead architect · Solo developer · Own QA |
+| **Architecture** | 4 modules · 6 ADRs · 1 flow diagram |
+| **Quality** | 28 tests · 100% coverage · 0 lint warnings |
+| **Interfaces** | 1 CLI · 1 REST API · 3 ranking modes |
+| **Standards** | PEP 8 · PEP 257 · Conventional Commits |
+
+Every line reviewed. Every tradeoff documented. Every edge case tested.
+
+*The bugs were the curriculum.*
