@@ -18,12 +18,18 @@ pip install -e ".[dev]"
 
 ## Running the Project
 
+The project ships **four entry points**, all built on the same core
+module (`src/recommender.py`):
+
 ```bash
-# CLI — runs 3 profiles × 3 modes
+# CLI — runs 3 profiles × 3 ranking modes, prints tables
 python src/main.py
 
 # REST API — Swagger UI at http://127.0.0.1:8000/docs
 cd src && uvicorn api:app --reload
+
+# Streamlit UI — interactive front-end at http://localhost:8501
+streamlit run app.py
 
 # Benchmark — measures score_song and recommend_songs scaling
 python benchmark.py
@@ -41,9 +47,9 @@ python -m pytest tests/ --cov=src --cov-config=.coveragerc --cov-report=term-mis
 
 **Why coverage is scoped to `src/recommender.py`:** the core domain
 module holds all business logic (loading, scoring, ranking). The wrapper
-files (`api.py`, `main.py`) contain no logic that isn't already tested
-through the domain layer, so they are excluded via `.coveragerc`. See
-ADR-006 in `ARCHITECTURE.md` for the rationale.
+files (`api.py`, `main.py`, `app.py`) contain no logic that isn't
+already tested through the domain layer, so they are excluded via
+`.coveragerc`. See ADR-006 in `ARCHITECTURE.md` for the rationale.
 
 ## Code Style
 
@@ -61,6 +67,16 @@ ruff check .
 ruff format --check .
 ```
 
+To auto-fix issues:
+
+```bash
+ruff check . --fix
+ruff format .
+```
+
+Ruff is configured in `pyproject.toml` under `[tool.ruff]`. Markdown
+files are excluded — code blocks in docs are illustration, not source.
+
 ## Docs You May Need to Update
 
 If your change affects any of the following, update the corresponding doc:
@@ -71,6 +87,7 @@ If your change affects any of the following, update the corresponding doc:
 | Ranking behavior, diversity | `README.md` §2c, `model_card.md` §6 |
 | Dataset shape (songs.csv) | `README.md` §2a, `model_card.md` §2 & §5 |
 | REST endpoints, schemas | `README.md` §4, `ARCHITECTURE.md` ADR-006 |
+| Streamlit UI features | `README.md` §5 |
 | AI workflow | `ai_interactions.md` |
 
 ## PR Checklist
