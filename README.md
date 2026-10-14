@@ -1,9 +1,9 @@
 # 🎵 Music Recommender Simulation
 
-[![Tests](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-28%20passing-brightgreen)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions)
 [![Lint](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/lint.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#-testing)
-[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](#-how-to-run)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#5-testing)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](#6-how-to-run)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi)](src/api.py)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -315,11 +315,32 @@ ai110-module3show-musicrecommendersimulation-starter/
 ├── output.txt                 # Saved CLI output for all combinations
 ├── model_card.md              # Model Card (bias, limits, improvement)
 ├── ARCHITECTURE.md            # 6 Architecture Decision Records
+├── benchmark.py               # Scaling benchmark for score/rank functions
 ├── ai_interactions.md         # AI agent workflow log
 ├── pyproject.toml             # Package metadata + dev deps
 ├── requirements.txt
+├── LICENSE                    # MIT License
+├── CONTRIBUTING.md            # Contribution workflow
 └── README.md
 ```
+
+---
+
+## 8. Benchmark
+
+`benchmark.py` measures how `score_song` and `recommend_songs` scale as
+the catalog grows. The 20-song base catalog is duplicated to reach larger
+sizes (n=20 to n=2000).
+
+```bash
+python benchmark.py
+```
+
+Expected results:
+
+- **`score_song`** — O(1) per song (constant time, no catalog scan).
+- **`recommend_songs`** — O(n log n). Dominant cost is sorting the
+  scored candidates.
 
 ---
 
