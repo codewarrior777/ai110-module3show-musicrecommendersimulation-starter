@@ -1,11 +1,21 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,popularity,release_year,detailed_mood_tags,instrumentalness,liveness
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,72,2023,"upbeat,euphoric,summery",0.05,0.12
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,68,2022,"mellow,focused,cozy",0.88,0.10
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,75,2021,"aggressive,powerful,driving",0.02,0.34
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,80,2023,"calm,rainy,studious",0.92,0.08
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,85,2024,"pumping,energetic,workout",0.01,0.15
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,64,2020,"dreamy,weightless,meditative",0.95,0.05
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,55,2019,"warm,intimate,vintage",0.76,0.22
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,69,2022,"nostalgic,cinematic,dark",0.30,0.18
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,71,2023,"concentrated,steady,minimal",0.85,0.12
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,66,2023,"breezy,optimistic,colorful",0.12,0.28
+11,Paper Planes,Indigo Parade,indie pop,moody,0.55,104,0.62,0.68,0.42,60,2021,"wistful,airy,autumnal",0.20,0.24
+12,Deep Current,Orbit Bloom,ambient,focused,0.32,66,0.55,0.38,0.94,58,2022,"still,expansive,patient",0.97,0.03
+13,Static Bloom,Voltline,rock,angry,0.88,148,0.35,0.62,0.15,63,2022,"raw,explosive,defiant",0.08,0.42
+14,Neon Alley,Slow Stereo,synthwave,chill,0.58,96,0.58,0.71,0.48,62,2021,"urban,sleek,nocturnal",0.55,0.14
+15,Sunrise Reprise,Neon Echo,pop,happy,0.79,122,0.86,0.81,0.20,64,2024,"bright,triumphant,hopeful",0.03,0.16
+16,Study Hall,Paper Lanterns,lofi,focused,0.30,70,0.54,0.55,0.90,76,2023,"quiet,steady,attentive",0.94,0.06
+17,Valley Echo,Indigo Parade,folk,relaxed,0.45,88,0.74,0.50,0.85,52,2019,"pastoral,humble,timeless",0.70,0.30
+18,After Hours,LoRoom,synthwave,moody,0.68,112,0.47,0.72,0.30,61,2024,"lonely,metropolitan,late-night",0.40,0.20
+19,Rooftop Reprise,Max Pulse,pop,intense,0.87,128,0.75,0.84,0.08,70,2024,"anthemic,rousing,celebratory",0.02,0.22
+20,Midnight Jazz,Slow Stereo,jazz,moody,0.50,84,0.66,0.58,0.82,58,2020,"smoky,introspective,classic",0.72,0.26
