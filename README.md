@@ -1,9 +1,10 @@
 # 🎵 Music Recommender Simulation
 
+[![Demo](https://img.shields.io/badge/DEMO-LIVE-red?style=for-the-badge)](https://ai110-module3show-musicrecommendersimulation-starter-s6xnux632.streamlit.app)
 [![Tests](https://img.shields.io/badge/tests-28%20passing-brightgreen)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions)
-[![Lint](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/lint.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#5-testing)
-[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](#6-how-to-run)
+[![Lint](https://img.shields.io/badge/lint-passing-brightgreen)](https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter/actions/workflows/lint.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#6-testing)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](#7-how-to-run)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi)](src/api.py)
 [![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit)](app.py)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -13,6 +14,8 @@ against user taste profiles. Built as Project 3 for **AI 110 — Foundations
 of AI Engineering**.
 
 **Deliverables:** CLI + tests (100% coverage) + FastAPI REST API + Streamlit UI + Model Card + ARCHITECTURE (6 ADRs).
+
+**🔴 [Try the live demo →](https://ai110-module3show-musicrecommendersimulation-starter-s6xnux632.streamlit.app)**
 
 ---
 
@@ -291,7 +294,10 @@ curl http://127.0.0.1:8000/recommend/synthwave_late?k=3&mode=genre-first
 For an interactive front-end, the project ships a **Streamlit app** that
 wraps the same functional API used by the CLI and REST service.
 
+**🔴 Live demo:** https://ai110-module3show-musicrecommendersimulation-starter-s6xnux632.streamlit.app
+
 ```bash
+# Run locally
 streamlit run app.py
 # Opens at http://localhost:8501
 ```
