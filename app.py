@@ -22,7 +22,6 @@ from recommender import (
     recommend_songs,
 )
 
-
 # ---------------------------------------------------------------------
 # Page config
 # ---------------------------------------------------------------------
@@ -104,12 +103,8 @@ if profile_choice == "✏️ Custom profile":
         "Favorite mood",
         sorted({s["mood"] for s in songs}),
     )
-    custom_energy = st.sidebar.slider(
-        "Target energy", 0.0, 1.0, 0.7, 0.05
-    )
-    custom_acoustic = st.sidebar.checkbox(
-        "I like acoustic music", value=False
-    )
+    custom_energy = st.sidebar.slider("Target energy", 0.0, 1.0, 0.7, 0.05)
+    custom_acoustic = st.sidebar.checkbox("I like acoustic music", value=False)
     prefs = {
         "favorite_genre": custom_genre,
         "favorite_mood": custom_mood,
@@ -178,15 +173,17 @@ if not ranked:
 else:
     table_rows = []
     for i, (song, score, explanation) in enumerate(ranked, start=1):
-        table_rows.append({
-            "#": i,
-            "Title": song["title"],
-            "Artist": song["artist"],
-            "Genre": song["genre"],
-            "Mood": song["mood"],
-            "Energy": f"{song['energy']:.2f}",
-            "Score": f"{score:.2f}",
-        })
+        table_rows.append(
+            {
+                "#": i,
+                "Title": song["title"],
+                "Artist": song["artist"],
+                "Genre": song["genre"],
+                "Mood": song["mood"],
+                "Energy": f"{song['energy']:.2f}",
+                "Score": f"{score:.2f}",
+            }
+        )
 
     df = pd.DataFrame(table_rows)
     st.dataframe(df, width="stretch", hide_index=True)
@@ -196,8 +193,7 @@ else:
 
     for i, (song, score, explanation) in enumerate(ranked, start=1):
         with st.expander(
-            f"{i}. {song['title']} — {song['artist']} "
-            f"(Score: {score:.2f})"
+            f"{i}. {song['title']} — {song['artist']} (Score: {score:.2f})"
         ):
             st.write(f"**Genre:** {song['genre']}")
             st.write(f"**Mood:** {song['mood']}")

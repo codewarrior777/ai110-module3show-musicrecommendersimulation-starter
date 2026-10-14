@@ -17,7 +17,6 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from recommender import load_songs, recommend_songs, score_song
 
-
 PROFILE = {
     "favorite_genre": "synthwave",
     "favorite_mood": "moody",
