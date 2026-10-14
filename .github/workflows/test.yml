@@ -29,8 +29,15 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          python -m pytest tests/ -v --cov=src/recommender --cov-report=term-missing
+          python -m pytest tests/ -v \
+            --cov=src \
+            --cov-report=term-missing \
+            --cov-config=.coveragerc
 
-      - name: Verify coverage threshold (95%)
+      - name: Verify coverage threshold (95% on recommender.py)
         run: |
-          python -m pytest tests/ --cov=src/recommender --cov-fail-under=95 --no-header -q
+          python -m pytest tests/ \
+            --cov=src \
+            --cov-config=.coveragerc \
+            --cov-fail-under=95 \
+            --no-header -q
