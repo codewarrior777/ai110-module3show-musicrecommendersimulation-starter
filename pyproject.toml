@@ -37,11 +37,3 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter"
 Repository = "https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-v --cov=src --cov-report=term-missing"
-
-[tool.ruff]
-line-length = 88
-target-version = "py312"
