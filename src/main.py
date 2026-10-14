@@ -14,8 +14,7 @@ from pathlib import Path
 # Allow running from repo root or src/
 sys.path.insert(0, str(Path(__file__).parent))
 
-from recommender import load_songs, recommend_songs, RANKING_MODES
-
+from recommender import load_songs, recommend_songs
 
 PROFILES = {
     "EDM / Gym Hero": {
@@ -57,11 +56,13 @@ def print_table(profile_name: str, ranked):
         for i, (song, score, explanation) in enumerate(ranked, start=1)
     ]
     print(f"\n=== {profile_name} ===\n")
-    print(tabulate(
-        rows,
-        headers=["#", "Title", "Artist", "Score", "Why (excerpt)"],
-        tablefmt="fancy_grid",
-    ))
+    print(
+        tabulate(
+            rows,
+            headers=["#", "Title", "Artist", "Score", "Why (excerpt)"],
+            tablefmt="fancy_grid",
+        )
+    )
 
 
 def main() -> None:

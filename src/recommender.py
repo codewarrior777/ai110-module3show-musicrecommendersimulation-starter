@@ -17,16 +17,16 @@ Stretch features:
 
 import csv
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
-
 
 # ---------------------------------------------------------------------
 # Dataclasses (required by tests/test_recommender.py)
 # ---------------------------------------------------------------------
 
+
 @dataclass
 class Song:
     """Represents a song and its attributes."""
+
     id: int
     title: str
     artist: str
@@ -42,6 +42,7 @@ class Song:
 @dataclass
 class UserProfile:
     """Represents a user's taste preferences."""
+
     favorite_genre: str
     favorite_mood: str
     target_energy: float
@@ -53,9 +54,9 @@ class UserProfile:
 # ---------------------------------------------------------------------
 
 RANKING_MODES = {
-    "genre-first":        {"genre": 3.0, "mood": 2.0, "energy": 2.0, "acoustic": 1.0},
-    "mood-first":         {"genre": 2.0, "mood": 3.0, "energy": 2.0, "acoustic": 1.0},
-    "energy-similarity":  {"genre": 1.0, "mood": 1.0, "energy": 4.0, "acoustic": 1.0},
+    "genre-first": {"genre": 3.0, "mood": 2.0, "energy": 2.0, "acoustic": 1.0},
+    "mood-first": {"genre": 2.0, "mood": 3.0, "energy": 2.0, "acoustic": 1.0},
+    "energy-similarity": {"genre": 1.0, "mood": 1.0, "energy": 4.0, "acoustic": 1.0},
 }
 
 DEFAULT_MODE = "genre-first"
@@ -65,36 +66,39 @@ DEFAULT_MODE = "genre-first"
 # Phase 1: load_songs — CSV loader with type conversion
 # ---------------------------------------------------------------------
 
-def load_songs(csv_path: str) -> List[Dict]:
+
+def load_songs(csv_path: str) -> list[dict]:
     """
     Load songs from a CSV file into a list of dicts.
 
     Converts numeric columns to their proper types.
     Keeps categorical columns (genre, mood, detailed_mood_tags) as strings.
     """
-    songs: List[Dict] = []
+    songs: list[dict] = []
     try:
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                songs.append({
-                    "id": int(row["id"]),
-                    "title": row["title"],
-                    "artist": row["artist"],
-                    "genre": row["genre"],
-                    "mood": row["mood"],
-                    "energy": float(row["energy"]),
-                    "tempo_bpm": float(row["tempo_bpm"]),
-                    "valence": float(row["valence"]),
-                    "danceability": float(row["danceability"]),
-                    "acousticness": float(row["acousticness"]),
-                    # Stretch attributes
-                    "popularity": int(row["popularity"]),
-                    "release_year": int(row["release_year"]),
-                    "detailed_mood_tags": row["detailed_mood_tags"],
-                    "instrumentalness": float(row["instrumentalness"]),
-                    "liveness": float(row["liveness"]),
-                })
+                songs.append(
+                    {
+                        "id": int(row["id"]),
+                        "title": row["title"],
+                        "artist": row["artist"],
+                        "genre": row["genre"],
+                        "mood": row["mood"],
+                        "energy": float(row["energy"]),
+                        "tempo_bpm": float(row["tempo_bpm"]),
+                        "valence": float(row["valence"]),
+                        "danceability": float(row["danceability"]),
+                        "acousticness": float(row["acousticness"]),
+                        # Stretch attributes
+                        "popularity": int(row["popularity"]),
+                        "release_year": int(row["release_year"]),
+                        "detailed_mood_tags": row["detailed_mood_tags"],
+                        "instrumentalness": float(row["instrumentalness"]),
+                        "liveness": float(row["liveness"]),
+                    }
+                )
     except FileNotFoundError:
         raise FileNotFoundError(f"Songs file not found: {csv_path}")
     return songs
@@ -104,11 +108,12 @@ def load_songs(csv_path: str) -> List[Dict]:
 # Phase 2/3: score_song — weighted scoring with reasons
 # ---------------------------------------------------------------------
 
+
 def score_song(
-    user_prefs: Dict,
-    song: Dict,
+    user_prefs: dict,
+    song: dict,
     mode: str = DEFAULT_MODE,
-) -> Tuple[float, List[str]]:
+) -> tuple[float, list[str]]:
     """
     Score a single song against user preferences.
 
@@ -116,7 +121,7 @@ def score_song(
     """
     weights = RANKING_MODES.get(mode, RANKING_MODES[DEFAULT_MODE])
     score = 0.0
-    reasons: List[str] = []
+    reasons: list[str] = []
 
     # --- 1. Genre match ---
     if song["genre"] == user_prefs.get("favorite_genre"):
@@ -149,9 +154,7 @@ def score_song(
     is_acoustic = song["acousticness"] > 0.6
     if likes_acoustic == is_acoustic:
         score += weights["acoustic"]
-        reasons.append(
-            "acoustic fits" if is_acoustic else "non-acoustic fits"
-        )
+        reasons.append("acoustic fits" if is_acoustic else "non-acoustic fits")
     else:
         reasons.append("acoustic preference mismatch")
 
@@ -174,13 +177,14 @@ def score_song(
 # Phase 3/4: recommend_songs — top-k with diversity bonus (stretch #2)
 # ---------------------------------------------------------------------
 
+
 def recommend_songs(
-    user_prefs: Dict,
-    songs: List[Dict],
+    user_prefs: dict,
+    songs: list[dict],
     k: int = 5,
     mode: str = DEFAULT_MODE,
     diversity_weight: float = 0.8,
-) -> List[Tuple[Dict, float, str]]:
+) -> list[tuple[dict, float, str]]:
     """
     Return the top-k songs as (song_dict, score, explanation) tuples,
     sorted by ADJUSTED score descending.
@@ -193,7 +197,7 @@ def recommend_songs(
     list is always monotonically descending.
     """
     # Score every song first
-    scored: List[Tuple[Dict, float, List[str]]] = []
+    scored: list[tuple[dict, float, list[str]]] = []
     for song in songs:
         score, reasons = score_song(user_prefs, song, mode=mode)
         scored.append((song, score, reasons))
@@ -202,9 +206,9 @@ def recommend_songs(
     scored.sort(key=lambda x: x[1], reverse=True)
 
     # Diversity-aware selection
-    picked: List[Tuple[Dict, float, str]] = []
-    seen_artists: Dict[str, int] = {}
-    seen_genres: Dict[str, int] = {}
+    picked: list[tuple[dict, float, str]] = []
+    seen_artists: dict[str, int] = {}
+    seen_genres: dict[str, int] = {}
 
     for song, score, reasons in scored:
         if len(picked) >= k:
@@ -237,18 +241,24 @@ def recommend_songs(
 # OOP API (required by tests/test_recommender.py)
 # ---------------------------------------------------------------------
 
+
 class Recommender:
     """OOP implementation of the recommendation logic."""
 
-    def __init__(self, songs: List[Song]):
+    def __init__(self, songs: list[Song]):
         self.songs = songs
 
-    def _to_dict(self, song: Song) -> Dict:
+    def _to_dict(self, song: Song) -> dict:
         """Convert a Song dataclass to a dict for the functional scorer."""
         return {
-            "id": song.id, "title": song.title, "artist": song.artist,
-            "genre": song.genre, "mood": song.mood, "energy": song.energy,
-            "tempo_bpm": song.tempo_bpm, "valence": song.valence,
+            "id": song.id,
+            "title": song.title,
+            "artist": song.artist,
+            "genre": song.genre,
+            "mood": song.mood,
+            "energy": song.energy,
+            "tempo_bpm": song.tempo_bpm,
+            "valence": song.valence,
             "danceability": song.danceability,
             "acousticness": song.acousticness,
             "popularity": 50,
@@ -258,7 +268,7 @@ class Recommender:
             "liveness": 0.0,
         }
 
-    def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
+    def recommend(self, user: UserProfile, k: int = 5) -> list[Song]:
         """Return the top-k songs for a user (OOP API)."""
         prefs = {
             "favorite_genre": user.favorite_genre,
@@ -282,4 +292,3 @@ class Recommender:
         }
         _, reasons = score_song(prefs, self._to_dict(song))
         return "; ".join(reasons)
-    

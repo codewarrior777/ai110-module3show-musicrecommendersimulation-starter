@@ -26,7 +26,6 @@ from recommender import (
     score_song,
 )
 
-
 # ---------------------------------------------------------------------
 # In-memory catalog (loaded once at startup)
 # ---------------------------------------------------------------------
@@ -88,6 +87,7 @@ app = FastAPI(
 # Pydantic schemas
 # ---------------------------------------------------------------------
 
+
 class UserPrefs(BaseModel):
     """User preferences for scoring songs."""
 
@@ -123,6 +123,7 @@ class SongOut(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------
 
+
 def _song_to_out(song: dict) -> SongOut:
     return SongOut(
         id=song["id"],
@@ -147,6 +148,7 @@ def _check_mode(mode: str) -> None:
 # Health
 # ---------------------------------------------------------------------
 
+
 @app.get("/", tags=["Health"])
 def root():
     """Health check + link to interactive docs."""
@@ -162,6 +164,7 @@ def root():
 # ---------------------------------------------------------------------
 # Catalog
 # ---------------------------------------------------------------------
+
 
 @app.get("/songs", tags=["Catalog"])
 def list_songs():
@@ -182,6 +185,7 @@ def get_song(song_id: int):
 # Modes and profiles
 # ---------------------------------------------------------------------
 
+
 @app.get("/modes", tags=["Metadata"])
 def list_modes():
     """List available ranking modes with their weights."""
@@ -192,14 +196,14 @@ def list_modes():
 def list_profiles():
     """List the three built-in user profiles."""
     return {
-        key: {"label": p["label"], "prefs": p["prefs"]}
-        for key, p in PROFILES.items()
+        key: {"label": p["label"], "prefs": p["prefs"]} for key, p in PROFILES.items()
     }
 
 
 # ---------------------------------------------------------------------
 # Recommendation
 # ---------------------------------------------------------------------
+
 
 @app.post("/recommend", tags=["Recommendation"])
 def recommend(payload: RecommendationRequest):
@@ -228,9 +232,7 @@ def recommend(payload: RecommendationRequest):
 
 
 @app.get("/recommend/{profile_key}", tags=["Recommendation"])
-def recommend_for_profile(
-    profile_key: str, k: int = 5, mode: str = "genre-first"
-):
+def recommend_for_profile(profile_key: str, k: int = 5, mode: str = "genre-first"):
     """
     Recommend the top-K songs for one of the built-in profiles.
 
@@ -239,8 +241,7 @@ def recommend_for_profile(
     if profile_key not in PROFILES:
         raise HTTPException(
             404,
-            f"Unknown profile '{profile_key}'. "
-            f"Choose from: {list(PROFILES.keys())}",
+            f"Unknown profile '{profile_key}'. Choose from: {list(PROFILES.keys())}",
         )
     _check_mode(mode)
     prefs = PROFILES[profile_key]["prefs"]
@@ -263,14 +264,13 @@ def recommend_for_profile(
 # Score a single song
 # ---------------------------------------------------------------------
 
+
 @app.post("/score/{song_id}", tags=["Recommendation"])
 def score_one(song_id: int, payload: UserPrefs):
     """Score a single song against a user profile."""
     for s in _SONGS:
         if s["id"] == song_id:
-            score, reasons = score_song(
-                payload.model_dump(exclude_none=True), s
-            )
+            score, reasons = score_song(payload.model_dump(exclude_none=True), s)
             return {
                 "song": _song_to_out(s).model_dump(),
                 "score": score,

@@ -21,10 +21,10 @@ from src.recommender import (
     score_song,
 )
 
-
 # ---------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_song() -> dict:
@@ -64,14 +64,28 @@ def small_recommender() -> Recommender:
     """A Recommender with 2 songs for OOP tests."""
     songs = [
         Song(
-            id=1, title="Test Pop Track", artist="Test Artist",
-            genre="pop", mood="happy", energy=0.8, tempo_bpm=120,
-            valence=0.9, danceability=0.8, acousticness=0.2,
+            id=1,
+            title="Test Pop Track",
+            artist="Test Artist",
+            genre="pop",
+            mood="happy",
+            energy=0.8,
+            tempo_bpm=120,
+            valence=0.9,
+            danceability=0.8,
+            acousticness=0.2,
         ),
         Song(
-            id=2, title="Chill Lofi Loop", artist="Other Artist",
-            genre="lofi", mood="chill", energy=0.4, tempo_bpm=80,
-            valence=0.6, danceability=0.5, acousticness=0.9,
+            id=2,
+            title="Chill Lofi Loop",
+            artist="Other Artist",
+            genre="lofi",
+            mood="chill",
+            energy=0.4,
+            tempo_bpm=80,
+            valence=0.6,
+            danceability=0.5,
+            acousticness=0.9,
         ),
     ]
     return Recommender(songs)
@@ -81,12 +95,20 @@ def small_recommender() -> Recommender:
 # Dataclasses
 # ---------------------------------------------------------------------
 
+
 class TestDataclasses:
     def test_song_creation(self):
         s = Song(
-            id=1, title="X", artist="Y", genre="pop", mood="happy",
-            energy=0.8, tempo_bpm=120, valence=0.9,
-            danceability=0.8, acousticness=0.2,
+            id=1,
+            title="X",
+            artist="Y",
+            genre="pop",
+            mood="happy",
+            energy=0.8,
+            tempo_bpm=120,
+            valence=0.9,
+            danceability=0.8,
+            acousticness=0.2,
         )
         assert s.id == 1
         assert s.title == "X"
@@ -94,8 +116,10 @@ class TestDataclasses:
 
     def test_user_profile_creation(self):
         u = UserProfile(
-            favorite_genre="pop", favorite_mood="happy",
-            target_energy=0.8, likes_acoustic=False,
+            favorite_genre="pop",
+            favorite_mood="happy",
+            target_energy=0.8,
+            likes_acoustic=False,
         )
         assert u.favorite_genre == "pop"
         assert u.likes_acoustic is False
@@ -104,6 +128,7 @@ class TestDataclasses:
 # ---------------------------------------------------------------------
 # load_songs
 # ---------------------------------------------------------------------
+
 
 class TestLoadSongs:
     def test_loads_real_csv(self):
@@ -117,10 +142,21 @@ class TestLoadSongs:
         songs = load_songs("data/songs.csv")
         first = songs[0]
         expected = {
-            "id", "title", "artist", "genre", "mood",
-            "energy", "tempo_bpm", "valence", "danceability", "acousticness",
-            "popularity", "release_year", "detailed_mood_tags",
-            "instrumentalness", "liveness",
+            "id",
+            "title",
+            "artist",
+            "genre",
+            "mood",
+            "energy",
+            "tempo_bpm",
+            "valence",
+            "danceability",
+            "acousticness",
+            "popularity",
+            "release_year",
+            "detailed_mood_tags",
+            "instrumentalness",
+            "liveness",
         }
         assert set(first.keys()) == expected
 
@@ -132,6 +168,7 @@ class TestLoadSongs:
 # ---------------------------------------------------------------------
 # score_song — branch coverage
 # ---------------------------------------------------------------------
+
 
 class TestScoreSong:
     def test_all_signals_match(self, sample_profile, sample_song):
@@ -149,7 +186,7 @@ class TestScoreSong:
             "target_energy": 0.0,
             "likes_acoustic": True,
         }
-        score, reasons = score_song(prefs, sample_song)
+        _score, reasons = score_song(prefs, sample_song)
         assert any("genre miss" in r for r in reasons)
         assert any("mood miss" in r for r in reasons)
         assert any("poor energy fit" in r for r in reasons)
@@ -203,22 +240,19 @@ class TestScoreSong:
 
     def test_each_mode_returns_different_score(self, sample_profile, sample_song):
         s_genre, _ = score_song(sample_profile, sample_song, mode="genre-first")
-        s_energy, _ = score_song(
-            sample_profile, sample_song, mode="energy-similarity"
-        )
+        s_energy, _ = score_song(sample_profile, sample_song, mode="energy-similarity")
         assert s_genre != s_energy
 
     def test_unknown_mode_falls_back_to_default(self, sample_profile, sample_song):
         s_default, _ = score_song(sample_profile, sample_song)
-        s_unknown, _ = score_song(
-            sample_profile, sample_song, mode="does-not-exist"
-        )
+        s_unknown, _ = score_song(sample_profile, sample_song, mode="does-not-exist")
         assert s_default == s_unknown
 
 
 # ---------------------------------------------------------------------
 # recommend_songs
 # ---------------------------------------------------------------------
+
 
 class TestRecommendSongs:
     def test_returns_top_k(self, sample_profile):
@@ -274,15 +308,14 @@ class TestRecommendSongs:
         }
         songs = load_songs("data/songs.csv")
         r_genre = recommend_songs(prefs, songs, k=5, mode="genre-first")
-        r_energy = recommend_songs(
-            prefs, songs, k=5, mode="energy-similarity"
-        )
+        r_energy = recommend_songs(prefs, songs, k=5, mode="energy-similarity")
         assert [r[0]["id"] for r in r_genre] != [r[0]["id"] for r in r_energy]
 
 
 # ---------------------------------------------------------------------
 # RANKING_MODES metadata
 # ---------------------------------------------------------------------
+
 
 class TestRankingModes:
     def test_all_modes_defined(self):
@@ -298,8 +331,7 @@ class TestRankingModes:
 
     def test_genre_first_prioritizes_genre(self):
         assert (
-            RANKING_MODES["genre-first"]["genre"]
-            > RANKING_MODES["genre-first"]["mood"]
+            RANKING_MODES["genre-first"]["genre"] > RANKING_MODES["genre-first"]["mood"]
         )
 
 
@@ -307,11 +339,14 @@ class TestRankingModes:
 # Recommender OOP wrapper
 # ---------------------------------------------------------------------
 
+
 class TestRecommenderOOP:
     def test_recommend_returns_top_k(self, small_recommender):
         user = UserProfile(
-            favorite_genre="pop", favorite_mood="happy",
-            target_energy=0.8, likes_acoustic=False,
+            favorite_genre="pop",
+            favorite_mood="happy",
+            target_energy=0.8,
+            likes_acoustic=False,
         )
         results = small_recommender.recommend(user, k=2)
         assert len(results) == 2
@@ -319,8 +354,10 @@ class TestRecommenderOOP:
 
     def test_recommend_prefers_matching_genre(self, small_recommender):
         user = UserProfile(
-            favorite_genre="pop", favorite_mood="happy",
-            target_energy=0.8, likes_acoustic=False,
+            favorite_genre="pop",
+            favorite_mood="happy",
+            target_energy=0.8,
+            likes_acoustic=False,
         )
         results = small_recommender.recommend(user, k=2)
         assert results[0].genre == "pop"
@@ -328,8 +365,10 @@ class TestRecommenderOOP:
 
     def test_explain_recommendation_returns_string(self, small_recommender):
         user = UserProfile(
-            favorite_genre="pop", favorite_mood="happy",
-            target_energy=0.8, likes_acoustic=False,
+            favorite_genre="pop",
+            favorite_mood="happy",
+            target_energy=0.8,
+            likes_acoustic=False,
         )
         song = small_recommender.songs[0]
         explanation = small_recommender.explain_recommendation(user, song)
@@ -338,8 +377,10 @@ class TestRecommenderOOP:
 
     def test_explain_recommendation_mentions_genre(self, small_recommender):
         user = UserProfile(
-            favorite_genre="pop", favorite_mood="happy",
-            target_energy=0.8, likes_acoustic=False,
+            favorite_genre="pop",
+            favorite_mood="happy",
+            target_energy=0.8,
+            likes_acoustic=False,
         )
         song = small_recommender.songs[0]
         explanation = small_recommender.explain_recommendation(user, song)
@@ -347,8 +388,10 @@ class TestRecommenderOOP:
 
     def test_recommend_returns_objects_with_all_fields(self, small_recommender):
         user = UserProfile(
-            favorite_genre="pop", favorite_mood="happy",
-            target_energy=0.8, likes_acoustic=False,
+            favorite_genre="pop",
+            favorite_mood="happy",
+            target_energy=0.8,
+            likes_acoustic=False,
         )
         results = small_recommender.recommend(user, k=1)
         song = results[0]
