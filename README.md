@@ -87,16 +87,48 @@ Every song in `data/songs.csv` has these attributes:
 
 ### 2b. Scoring formula
 
-For each song, `score_song(user_prefs, song)` computes:
+For each song, `score_song(user_prefs, song, mode)` computes:
 
 ```
-score =  (weights["genre"]    if genre == user.favorite_genre   else 0)
-       + (weights["mood"]     if mood  == user.favorite_mood    else 0)
-       +  weights["energy"] * (1 - abs(song.energy - user.target_energy))
-       + (weights["acoustic"] if acoustic_pref_matches          else 0)
-       +  song.popularity / 100 * 0.5        # popularity micro-bonus
-       -  tempo_penalty (if user.max_tempo set)
+score = 0.0
+
+# 1. Genre match (binary)
+if song.genre == user.favorite_genre:
+    score += weights["genre"]
+
+# 2. Mood match (binary)
+if song.mood == user.favorite_mood:
+    score += weights["mood"]
+
+# 3. Energy similarity (continuous, partial credit)
+energy_diff   = abs(song.energy - user.target_energy)
+energy_points = weights["energy"] * (1 - energy_diff)
+score += energy_points
+
+# 4. Acoustic preference (binary fit, not similarity)
+is_acoustic = song.acousticness > 0.6
+if user.likes_acoustic == is_acoustic:
+    score += weights["acoustic"]
+
+# 5. Popularity micro-bonus (0.0 – 0.5)
+score += round(song.popularity / 100 * 0.5, 3)
+
+# 6. Optional tempo cap (only if user.max_tempo is set)
+if user.max_tempo is not None and song.tempo_bpm > user.max_tempo:
+    penalty = (song.tempo_bpm - user.max_tempo) / 100
+    score -= penalty
 ```
+
+**Key clarifications:**
+
+- **Acoustic is a *fit*, not a preference.** A song receives the bonus when
+  `likes_acoustic == (acousticness > 0.6)`. A user who dislikes acoustic
+  music gets the bonus for non-acoustic songs (threshold `0.6`, not a
+  continuous similarity).
+- **Tempo penalty is linear** with slope `1/100` BPM and is **only applied
+  when `user.max_tempo` is set**. The three built-in profiles do not set it.
+- **Energy uses partial credit**, so a song with a small energy gap still
+  scores well; a perfect fit gives `weights["energy"]` points.
 
 **Weights vary by mode:**
 
@@ -108,15 +140,37 @@ score =  (weights["genre"]    if genre == user.favorite_genre   else 0)
 
 ### 2c. Diversity bonus
 
-The recommendation function re-ranks candidates with a diversity penalty:
+`recommend_songs` re-ranks candidates with a diversity penalty applied
+during a **greedy top-k selection**:
 
 ```
-adjusted_score = raw_score - (artist_repeats + genre_repeats) * 0.8
+# songs are pre-sorted by raw score, descending
+for song in sorted_by_raw_score:
+    if len(picked) >= k:
+        break
+
+    artist_repeat = seen_artists.get(song.artist, 0)
+    genre_repeat  = seen_genres.get(song.genre, 0)
+    penalty       = (artist_repeat + genre_repeat) * diversity_weight
+
+    adjusted_score = round(raw_score - penalty, 3)
+
+    picked.append((song, adjusted_score, ...))
+    seen_artists[song.artist] += 1
+    seen_genres[song.genre]  += 1
+
+# final list is re-sorted by adjusted_score, descending
+picked.sort(key=lambda x: x[1], reverse=True)
 ```
 
-Every time the same artist or genre appears again in the picked set, the
-penalty grows. This prevents the **"five songs by the same artist"** filter
-bubble that a pure top-K selection would produce.
+**Notes:**
+
+- `diversity_weight` defaults to **0.8** and is configurable per call.
+- Selection is **greedy by raw score** (the list is not re-sorted after each
+  pick). The **final returned list is re-sorted by adjusted score** so the
+  output is always monotonically descending.
+- The penalty grows **linearly** with each repeated artist or genre, which
+  prevents the *"five songs by the same artist"* filter bubble.
 
 ---
 
@@ -144,11 +198,11 @@ ranking modes. Full output is in `output.txt`.
 2. Night Drive Loop — Neon Echo — Score: 7.45
    Because: genre match (synthwave); mood match (moody); great energy fit (1.90) [diversity penalty: -0.80]
 
-3. Neon Alley — Slow Stereo — Score: 4.47
-   Because: genre match (synthwave); mood miss (chill); great energy fit (1.76) [diversity penalty: -1.60]
-
-4. Paper Planes — Indigo Parade — Score: 5.00
+3. Paper Planes — Indigo Parade — Score: 5.00
    Because: genre miss (indie pop); mood match (moody); great energy fit (1.70)
+
+4. Neon Alley — Slow Stereo — Score: 4.47
+   Because: genre match (synthwave); mood miss (chill); great energy fit (1.76) [diversity penalty: -1.60]
 
 5. Midnight Jazz — Slow Stereo — Score: 3.09
    Because: genre miss (jazz); mood match (moody); great energy fit (1.60) [diversity penalty: -0.80]
