@@ -1,111 +1,199 @@
-# 🎧 Model Card: Music Recommender Simulation
+# Music Recommender — Model Card
 
-## 1. Model Name  
-
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
-
----
-
-## 2. Intended Use  
-
-Describe what your recommender is designed to do and who it is for. 
-
-Prompts:  
-
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+**Model name:** Music Recommender Simulation v1.0
+**Author:** Gustavo Ramos
+**Course:** AI 110 — Foundations of AI Engineering
+**Project:** Project 3 (Music Recommender Simulation)
+**Date:** October 2026
 
 ---
 
-## 3. How the Model Works  
+## 1. Intended Use
 
-Explain your scoring approach in simple language.  
+**Intended use:** Recommend songs from a fixed 20-track catalog to a
+user who has explicitly stated their preferences for genre, mood,
+target energy level, and acoustic preference.
 
-Prompts:  
-
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+**Out-of-scope use:** The model is **not** intended for real production
+recommendation at scale, for users whose taste cannot be expressed by the
+four preference fields, or for any decision that affects a person's access
+to content. It is a learning artifact, not a product.
 
 ---
 
-## 4. Data  
+## 2. Dataset Description
 
-Describe the dataset the model uses.  
+| Property | Value |
+|---|---|
+| **Size** | 20 songs |
+| **Features per song** | 15 (id, title, artist, genre, mood, energy, tempo_bpm, valence, danceability, acousticness, popularity, release_year, detailed_mood_tags, instrumentalness, liveness) |
+| **Genres covered** | pop, lofi, rock, ambient, jazz, synthwave, indie pop, folk |
+| **Moods covered** | happy, chill, intense, relaxed, focused, moody, angry |
+| **Release years** | 2019-2024 |
+| **Source** | Hand-authored by the student for this project |
+| **Data types** | 3 categorical (genre, mood, detailed_mood_tags) + 12 numeric |
 
-Prompts:  
-
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
-
----
-
-## 5. Strengths  
-
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+The 5 extra attributes (popularity, release_year, detailed_mood_tags,
+instrumentalness, liveness) were added as **stretch feature #1**.
 
 ---
 
-## 6. Limitations and Bias 
+## 3. Algorithmic Approach (plain language)
 
-Where the system struggles or behaves unfairly. 
+For each candidate song, the model produces a **score** by adding together
+several signals:
 
-Prompts:  
+1. **+3.0** if the song's genre matches the user's favorite genre.
+2. **+2.0** if the song's mood matches the user's favorite mood.
+3. **+ up to 2.0** for how close the song's energy is to the user's target
+   energy. A perfect match gets 2.0; a maximum mismatch gets 0.0.
+4. **+1.0** if the acoustic preference matches (acoustic for
+   `likes_acoustic=True`, non-acoustic otherwise).
+5. **+ up to 0.5** as a popularity micro-bonus (popularity / 100 × 0.5).
 
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+The **weights change by mode**:
 
----
+- `genre-first` → genre counts the most (3.0).
+- `mood-first` → mood counts the most (3.0).
+- `energy-similarity` → energy counts the most (up to 4.0).
 
-## 7. Evaluation  
-
-How you checked whether the recommender behaved as expected. 
-
-Prompts:  
-
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
-
-No need for numeric metrics unless you created some.
+After scoring, the top-K songs are picked. **A diversity penalty of 0.8
+per repeated artist or genre** is applied at picking time to prevent the
+list from collapsing into "five songs by the same artist".
 
 ---
 
-## 8. Future Work  
+## 4. Evaluation
 
-Ideas for how you would improve the model next.  
+The model was evaluated by running 3 user profiles across 3 ranking modes
+(9 combinations). Full output is saved in `output.txt`.
 
-Prompts:  
+**Evaluation method:** Manual inspection of the top-5 per profile. No
+held-out test set — the model is rule-based, so there is nothing to
+"train" and nothing to overfit. Accuracy is not measured because there
+is no ground-truth label; the deliverable is **interpretability of the
+ranking**, not predictive accuracy.
 
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+**Sanity checks performed:**
+
+- ✅ EDM profile surfaces high-energy pop (Gym Hero, Rooftop Reprise)
+- ✅ Chill profile surfaces lofi with high acousticness (Library Rain, Focus Flow)
+- ✅ Synthwave profile surfaces moody synthwave (After Hours, Night Drive Loop)
+- ✅ Diversity penalty visibly kicks in when the same artist repeats
+- ✅ All 3 modes produce different orderings on the same profile
 
 ---
 
-## 9. Personal Reflection  
+## 5. Limitations and Biases
 
-A few sentences about your experience.  
+### 5a. Genre imbalance
 
-Prompts:  
+The dataset has **2 pop songs, 3 lofi songs, 2 synthwave songs, 1 rock,
+2 ambient, 2 jazz, 3 indie pop, 1 folk**. A user whose favorite genre is
+`folk` (only 1 song) will get essentially that one song plus four
+"genre miss" fillers. **Users of under-represented genres are
+systematically under-served.**
 
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+### 5b. Small catalog
+
+20 songs cannot represent any real genre. "Pop" here spans synth-pop,
+dance-pop, and indie pop — three different sub-genres the model treats
+as identical.
+
+### 5c. Popularity bias
+
+The `+0.5` popularity micro-bonus favors mainstream tracks. A user who
+prefers obscure music gets no benefit from that term, and songs with
+`popularity < 30` are effectively invisible if their other signals aren't
+strong.
+
+### 5d. Explicit preference model
+
+The model requires the user to *know* their favorite genre and mood. Real
+listeners often can't articulate this. A learned embedding would sidestep
+the problem, at the cost of interpretability.
+
+### 5e. Static catalog
+
+There is no recency signal beyond a raw `release_year` column that the
+scoring function doesn't use. A 2019 song and a 2024 song with the same
+features score identically.
+
+---
+
+## 6. Bias I Chose to Address (and Why)
+
+**Filter bubble via repeated artists / genres.** The dataset has 2 artists
+with multiple songs (Neon Echo ×3, LoRoom ×3, Slow Stereo ×3, Indigo
+Parade ×3). Without intervention, a synthwave fan would see
+`Night Drive Loop` at #1 and `Sunrise City` at #2 — both by Neon Echo.
+
+**Fix:** a `diversity_weight=0.8` penalty is subtracted at picking time
+for each previously seen artist and genre. Visible in `output.txt` as
+`[diversity penalty: -0.80]` tags.
+
+**Tradeoff:** the penalty is fixed at 0.8 regardless of how strong the
+underlying signal is. A user who genuinely *wants* three tracks by the same
+artist will be over-penalized. A per-user tunable would be the next step.
+
+---
+
+## 7. Ideas for Improvement
+
+1. **Grow the catalog to 200+ songs** with balanced genre representation.
+2. **Replace the fixed weights with learned weights** (e.g., logistic
+   regression over past "liked" songs per user).
+3. **Add collaborative filtering** so users with similar taste influence
+   each other's recommendations.
+4. **Add a novelty score** so the model can surface tracks the user is
+   likely to *not* have heard yet.
+5. **Make the diversity weight tunable** at the profile level, not global.
+6. **Add release_year decay** so recent music gets a small bonus.
+7. **Add automated tests** — the `tests/` directory is currently a stub.
+
+---
+
+## 8. Coverage and AI Oversight Note
+
+**When I asked ChatGPT and Gemini to help with the scoring logic, neither
+model proactively flagged:**
+
+- The genre imbalance in the dataset
+- That `popularity` might favor mainstream bias
+- That the diversity penalty has no per-user tunable
+
+Both models implemented the code mechanics I asked for and stopped there.
+**This is the same "silent coverage gap" pattern I documented in Module 2**
+(see PawPal+ Model Card, section 7). AI is reliable as a *code assistant*
+and unreliable as a *design reviewer* — it doesn't volunteer risks that
+weren't explicitly requested.
+
+**My workflow change:** For this project, after every AI-suggested code
+block I explicitly asked: *"What inputs or user profiles would make this
+score behave badly?"*. That question surfaced the `folk` genre issue
+before I shipped.
+
+---
+
+## 9. Rule-Based vs. ML Comparison (for context)
+
+| Aspect | Rule-Based (this project) | Real ML Recommenders |
+|---|---|---|
+| **Interpretability** | High — every score is traceable | Low — embeddings are opaque |
+| **Cold start** | Works immediately | Needs interaction data |
+| **Data requirement** | None (rules written by hand) | Millions of interactions |
+| **Failure mode** | Predictable ("unknown genre → 0") | Silent (high-confidence wrong) |
+| **Cost** | Zero | GPU inference |
+
+For a 20-song catalog with explicit user preferences, a rule-based system
+is the correct design. A learned model would overfit and generalize worse.
+
+---
+
+## 10. Takeaway
+
+**Ranking is not the same as judging.** A model that produces a plausible
+top-5 is not a model that produces a fair one. The single most important
+design decision in this project was **surfacing the reasons** next to each
+score — that's what turned a black-box ranking into something a user can
+audit and disagree with.
