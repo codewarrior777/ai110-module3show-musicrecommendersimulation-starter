@@ -172,7 +172,7 @@ if not ranked:
     st.warning("No songs matched your profile.")
 else:
     table_rows = []
-    for i, (song, score, explanation) in enumerate(ranked, start=1):
+    for i, (song, score, _explanation) in enumerate(ranked, start=1):
         table_rows.append(
             {
                 "#": i,

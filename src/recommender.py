@@ -76,7 +76,7 @@ def load_songs(csv_path: str) -> list[dict]:
     """
     songs: list[dict] = []
     try:
-        with open(csv_path, "r", encoding="utf-8") as f:
+        with open(csv_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 songs.append(
@@ -99,8 +99,8 @@ def load_songs(csv_path: str) -> list[dict]:
                         "liveness": float(row["liveness"]),
                     }
                 )
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Songs file not found: {csv_path}")
+    except FileNotFoundError as err:
+        raise FileNotFoundError(f"Songs file not found: {csv_path}") from err
     return songs
 
 

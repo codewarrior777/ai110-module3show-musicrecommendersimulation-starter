@@ -21,6 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "streamlit>=1.30",
+    "pandas>=2.0",
     "tabulate>=0.9",
     "fastapi[standard]>=0.115",
     "uvicorn>=0.30",
@@ -37,3 +38,43 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter"
 Repository = "https://github.com/codewarrior777/ai110-module3show-musicrecommendersimulation-starter"
+
+# ---------------------------------------------------------------------
+# Ruff — linting + formatting
+# ---------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = [
+    "*.md",           # Markdown code blocks are documentation, not code
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "W",    # pycodestyle warnings
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+]
+ignore = [
+    "E501",  # line-too-long (handled by the formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+# ---------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
