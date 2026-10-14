@@ -10,8 +10,8 @@ Run locally:
 import sys
 from pathlib import Path
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 # Add src/ to sys.path so `from recommender import ...` works
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -38,7 +38,8 @@ st.set_page_config(
 # ---------------------------------------------------------------------
 @st.cache_data
 def get_catalog():
-    return load_songs("data/songs.csv")
+    csv_path = Path(__file__).parent / "data" / "songs.csv"
+    return load_songs(str(csv_path))
 
 
 songs = get_catalog()
@@ -90,7 +91,7 @@ st.sidebar.header("🎚️ Settings")
 profile_choice = st.sidebar.selectbox(
     "User profile",
     list(PROFILES.keys()),
-    index=2,  # default: Synthwave
+    index=2,
 )
 
 if profile_choice == "✏️ Custom profile":
@@ -175,7 +176,6 @@ ranked = recommend_songs(
 if not ranked:
     st.warning("No songs matched your profile.")
 else:
-    # Build a table for display
     table_rows = []
     for i, (song, score, explanation) in enumerate(ranked, start=1):
         table_rows.append({
@@ -189,13 +189,16 @@ else:
         })
 
     df = pd.DataFrame(table_rows)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
 
     st.markdown("---")
     st.subheader("💡 Why these songs?")
 
     for i, (song, score, explanation) in enumerate(ranked, start=1):
-        with st.expander(f"{i}. {song['title']} — {song['artist']} (Score: {score:.2f})"):
+        with st.expander(
+            f"{i}. {song['title']} — {song['artist']} "
+            f"(Score: {score:.2f})"
+        ):
             st.write(f"**Genre:** {song['genre']}")
             st.write(f"**Mood:** {song['mood']}")
             st.write(f"**Energy:** {song['energy']}")
