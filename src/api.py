@@ -16,7 +16,7 @@ from pathlib import Path
 # Ensure `src/` is importable when running from the project root
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from recommender import (
@@ -91,11 +91,13 @@ app = FastAPI(
 class UserPrefs(BaseModel):
     """User preferences for scoring songs."""
 
-    favorite_genre: str = Field(..., examples=["pop"])
-    favorite_mood: str = Field(..., examples=["intense"])
-    target_energy: float = Field(..., ge=0.0, le=1.0, examples=[0.9])
-    likes_acoustic: bool = Field(False, examples=[False])
-    max_tempo: float | None = Field(None, examples=[None])
+    favorite_genre: str = Field(..., json_schema_extra={"examples": ["pop"]})
+    favorite_mood: str = Field(..., json_schema_extra={"examples": ["intense"]})
+    target_energy: float = Field(
+        ..., ge=0.0, le=1.0, json_schema_extra={"examples": [0.9]}
+    )
+    likes_acoustic: bool = Field(False, json_schema_extra={"examples": [False]})
+    max_tempo: float | None = Field(None, json_schema_extra={"examples": [None]})
 
 
 class RecommendationRequest(BaseModel):
@@ -103,7 +105,7 @@ class RecommendationRequest(BaseModel):
 
     user_prefs: UserPrefs
     k: int = Field(5, ge=1, le=20)
-    mode: str = Field("genre-first", examples=["genre-first"])
+    mode: str = Field("genre-first", json_schema_extra={"examples": ["genre-first"]})
     diversity_weight: float = Field(0.8, ge=0.0, le=5.0)
 
 
@@ -232,7 +234,11 @@ def recommend(payload: RecommendationRequest):
 
 
 @app.get("/recommend/{profile_key}", tags=["Recommendation"])
-def recommend_for_profile(profile_key: str, k: int = 5, mode: str = "genre-first"):
+def recommend_for_profile(
+    profile_key: str,
+    k: int = Query(5, ge=1, le=20, description="Number of songs to return (1-20)"),
+    mode: str = Query("genre-first", description="Ranking mode"),
+):
     """
     Recommend the top-K songs for one of the built-in profiles.
 

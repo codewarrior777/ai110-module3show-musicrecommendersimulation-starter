@@ -254,6 +254,29 @@ uvicorn api:app --reload
 | GET | `/recommend/{profile_key}` | Recommend for a **built-in** profile |
 | POST | `/score/{song_id}` | Score one song against a profile |
 
+### Known API limitations
+
+The FastAPI layer is a thin adapter over the domain module (see ADR-006),
+so it inherits a few constraints worth noting:
+
+- **`SongOut` exposes 7 of the 15 CSV fields.** The response includes
+  `id`, `title`, `artist`, `genre`, `mood`, `energy`, and `tempo_bpm`.
+  Fields that influence the score — `popularity` and `acousticness` —
+  are not returned. The `/score/{song_id}` endpoint gives the resulting
+  `score` and `reasons`, but not the raw features behind them.
+- **Response shape differs between the two recommend endpoints.**
+  `POST /recommend` returns a **flat list** of `{song, score, explanation}`.
+  `GET /recommend/{profile_key}` returns a **wrapped object** with
+  `{profile, mode, results: [...]}`. Clients must handle both shapes.
+- **Missing `data/songs.csv` does not raise.** If the CSV is absent at
+  startup, `_SONGS` is silently set to `[]`. The health check will report
+  `song_count: 0` and recommend endpoints will return empty lists without
+  an error. Verify the file exists before running the server.
+- **`UserPrefs` requires the three core fields** (`favorite_genre`,
+  `favorite_mood`, `target_energy`). Partial profiles are not supported
+  via the API — this is intentional, so the scorer always has enough
+  signal to rank.
+
 **Example:**
 
 ```bash
