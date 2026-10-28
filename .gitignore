@@ -18,3 +18,4 @@ venv/
 .coverage.*
 htmlcov/
 *.egg-info/
+.streamlit/
