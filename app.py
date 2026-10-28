@@ -10,6 +10,7 @@ Run locally:
 import sys
 from pathlib import Path
 
+import google.generativeai as genai
 import pandas as pd
 import streamlit as st
 
@@ -21,6 +22,19 @@ from recommender import (
     load_songs,
     recommend_songs,
 )
+
+# ---------------------------------------------------------------------
+# AI Assistant Configuration
+# ---------------------------------------------------------------------
+try:
+    # Lee la clave desde el archivo .streamlit/secrets.toml
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    # Usamos Gemini 1.5 Flash por su rapidez y eficiencia
+    ai_model = genai.GenerativeModel("gemini-1.5-flash")
+except Exception as e:
+    ai_model = None
+    ai_error = str(e)
+
 
 # ---------------------------------------------------------------------
 # Predefined profiles
@@ -59,7 +73,7 @@ def get_catalog() -> list[dict]:
 
 
 # ---------------------------------------------------------------------
-# UI Components (Refactored into functions)
+# UI Components
 # ---------------------------------------------------------------------
 def render_sidebar(songs: list[dict]) -> tuple[dict, str, float, int]:
     """Render the sidebar and return user choices."""
@@ -187,6 +201,62 @@ def render_recommendations(
             st.write(f"**Why:** {explanation}")
 
 
+def render_chat_assistant():
+    """Render the AI chat interface."""
+    st.header("🤖 Music Recommender Assistant")
+    st.caption(
+        "Ask me about the catalog, the ranking modes, or how the algorithm works."
+    )
+
+    if not ai_model:
+        st.error(f"AI Assistant is not configured. Error: {ai_error}")
+        st.info(
+            "Please make sure you have added your GEMINI_API_KEY to `.streamlit/secrets.toml`."
+        )
+        return
+
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # React to user input
+    if prompt := st.chat_input("What would you like to know?"):
+        # Display user message in chat message container
+        st.chat_message("user").markdown(prompt)
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+
+        # Generate AI response
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            try:
+                system_prompt = (
+                    "You are an expert assistant for the 'Music Recommender Simulation' project. "
+                    "Your knowledge is based on the 20 songs in `data/songs.csv` and the scoring logic in `src/recommender.py`. "
+                    "You can explain the three ranking modes: 'genre-first', 'mood-first', and 'energy-similarity'. "
+                    "You can also explain how the 'diversity penalty' works to prevent filter bubbles. "
+                    "Keep your answers concise, helpful, and directly related to this specific project."
+                )
+
+                # Combine context and prompt
+                full_prompt = f"{system_prompt}\n\nUser Question: {prompt}"
+
+                response = ai_model.generate_content(full_prompt)
+
+                message_placeholder.markdown(response.text)
+                # Add assistant response to chat history
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": response.text}
+                )
+            except Exception as e:
+                message_placeholder.error(f"Sorry, I encountered an error: {e}")
+
+
 # ---------------------------------------------------------------------
 # Main App
 # ---------------------------------------------------------------------
@@ -205,17 +275,25 @@ def main():
     )
     st.markdown("---")
 
-    # 1. Load Data
-    songs = get_catalog()
+    # Create the two tabs
+    tab1, tab2 = st.tabs(["🎵 Recommender", "🤖 AI Assistant"])
 
-    # 2. Render Sidebar
-    prefs, mode, diversity_weight, k = render_sidebar(songs)
+    with tab1:
+        # 1. Load Data
+        songs = get_catalog()
 
-    # 3. Render Main Content
-    render_profile_summary(prefs)
-    render_recommendations(songs, prefs, mode, diversity_weight, k)
+        # 2. Render Sidebar
+        prefs, mode, diversity_weight, k = render_sidebar(songs)
 
-    # 4. Render Footer
+        # 3. Render Main Content
+        render_profile_summary(prefs)
+        render_recommendations(songs, prefs, mode, diversity_weight, k)
+
+    with tab2:
+        # 4. Render AI Chat
+        render_chat_assistant()
+
+    # 5. Render Footer
     st.markdown("---")
     st.caption(
         "Built by Gustavo Ramos for AI 110 — Foundations of AI Engineering. "
