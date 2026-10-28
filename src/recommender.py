@@ -50,7 +50,7 @@ class UserProfile:
 
 
 # ---------------------------------------------------------------------
-# Ranking modes (stretch feature #3)
+# Ranking modes and configuration
 # ---------------------------------------------------------------------
 
 RANKING_MODES = {
@@ -60,6 +60,11 @@ RANKING_MODES = {
 }
 
 DEFAULT_MODE = "genre-first"
+
+# --- Magic Number Extraction (Single Source of Truth) ---
+ACOUSTIC_THRESHOLD = 0.6
+POPULARITY_MAX_BONUS = 0.5
+# --------------------------------------------------------
 
 
 # ---------------------------------------------------------------------
@@ -151,7 +156,7 @@ def score_song(
 
     # --- 4. Acoustic preference ---
     likes_acoustic = user_prefs.get("likes_acoustic", False)
-    is_acoustic = song["acousticness"] > 0.6
+    is_acoustic = song["acousticness"] > ACOUSTIC_THRESHOLD
     if likes_acoustic == is_acoustic:
         score += weights["acoustic"]
         reasons.append("acoustic fits" if is_acoustic else "non-acoustic fits")
@@ -160,7 +165,7 @@ def score_song(
 
     # --- 5. Popularity micro-bonus ---
     pop = song.get("popularity", 0)
-    popularity_bonus = round(pop / 100 * 0.5, 3)
+    popularity_bonus = round(pop / 100 * POPULARITY_MAX_BONUS, 3)
     score += popularity_bonus
 
     # --- 6. Optional tempo cap ---
